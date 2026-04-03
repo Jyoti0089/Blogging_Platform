@@ -50,5 +50,4 @@ exports.admin = (req, res, next) => {
     });
   }
 };
-
-module.exports = router;
+module.exports = { protect, admin };
