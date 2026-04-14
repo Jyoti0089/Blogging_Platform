@@ -1,3 +1,5 @@
+console.log('PROTECT:', protect);
+console.log('ADMIN:', admin);
 const express = require('express');
 const router = express.Router();
 const Blog = require('../models/Blog');
