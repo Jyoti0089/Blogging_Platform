@@ -1,30 +1,26 @@
-console.log('PROTECT:', protect);
-console.log('ADMIN:', admin);
 const express = require('express');
 const router = express.Router();
+
+const { protect, admin } = require('../middleware/auth');
 const Blog = require('../models/Blog');
 const User = require('../models/User');
-const { protect, admin } = require('../middleware/auth');
 
-// @route   GET /api/blogs
-// @desc    Get all blogs with filtering and search
-// @access  Public
+/* =========================
+   GET ALL BLOGS (PUBLIC)
+========================= */
 router.get('/', async (req, res) => {
   try {
     const { category, search, author, page = 1, limit = 10 } = req.query;
     const query = { status: 'published' };
 
-    // Category filter
     if (category && category !== 'all') {
       query.category = category;
     }
 
-    // Author filter
     if (author) {
       query.author = author;
     }
 
-    // Search functionality
     if (search) {
       query.$text = { $search: search };
     }
@@ -41,7 +37,7 @@ router.get('/', async (req, res) => {
       success: true,
       data: blogs,
       totalPages: Math.ceil(count / limit),
-      currentPage: page,
+      currentPage: Number(page),
       total: count
     });
   } catch (error) {
@@ -49,9 +45,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   GET /api/blogs/:id
-// @desc    Get single blog
-// @access  Public
+/* =========================
+   GET SINGLE BLOG (PUBLIC)
+========================= */
 router.get('/:id', async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id)
@@ -65,7 +61,6 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Increment views
     blog.views += 1;
     await blog.save();
 
@@ -75,9 +70,9 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// @route   POST /api/blogs
-// @desc    Create blog
-// @access  Private
+/* =========================
+   CREATE BLOG (PRIVATE)
+========================= */
 router.post('/', protect, async (req, res) => {
   try {
     const { title, content, excerpt, coverImage, category, tags, status } = req.body;
@@ -93,12 +88,12 @@ router.post('/', protect, async (req, res) => {
       author: req.user.id
     });
 
-    // Add blog to user's blogs array
     await User.findByIdAndUpdate(req.user.id, {
       $push: { blogs: blog._id }
     });
 
-    const populatedBlog = await Blog.findById(blog._id).populate('author', 'username profileImage');
+    const populatedBlog = await Blog.findById(blog._id)
+      .populate('author', 'username profileImage');
 
     res.status(201).json({
       success: true,
@@ -109,9 +104,9 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// @route   PUT /api/blogs/:id
-// @desc    Update blog
-// @access  Private
+/* =========================
+   UPDATE BLOG (PRIVATE)
+========================= */
 router.put('/:id', protect, async (req, res) => {
   try {
     let blog = await Blog.findById(req.params.id);
@@ -123,19 +118,17 @@ router.put('/:id', protect, async (req, res) => {
       });
     }
 
-    // Check ownership
     if (blog.author.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this blog'
+        message: 'Not authorized'
       });
     }
 
-    blog = await Blog.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).populate('author', 'username profileImage');
+    blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    }).populate('author', 'username profileImage');
 
     res.json({ success: true, data: blog });
   } catch (error) {
@@ -143,9 +136,9 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
-// @route   DELETE /api/blogs/:id
-// @desc    Delete blog
-// @access  Private
+/* =========================
+   DELETE BLOG (PRIVATE)
+========================= */
 router.delete('/:id', protect, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
@@ -157,17 +150,15 @@ router.delete('/:id', protect, async (req, res) => {
       });
     }
 
-    // Check ownership
     if (blog.author.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this blog'
+        message: 'Not authorized'
       });
     }
 
     await blog.deleteOne();
 
-    // Remove blog from user's blogs array
     await User.findByIdAndUpdate(blog.author, {
       $pull: { blogs: blog._id }
     });
@@ -178,27 +169,22 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
-// @route   POST /api/blogs/:id/like
-// @desc    Like/Unlike blog
-// @access  Private
+/* =========================
+   LIKE / UNLIKE BLOG
+========================= */
 router.post('/:id/like', protect, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
 
     if (!blog) {
-      return res.status(404).json({
-        success: false,
-        message: 'Blog not found'
-      });
+      return res.status(404).json({ message: 'Blog not found' });
     }
 
     const likeIndex = blog.likes.indexOf(req.user.id);
 
     if (likeIndex > -1) {
-      // Unlike
       blog.likes.splice(likeIndex, 1);
     } else {
-      // Like
       blog.likes.push(req.user.id);
     }
 
@@ -206,26 +192,27 @@ router.post('/:id/like', protect, async (req, res) => {
 
     res.json({
       success: true,
-      data: { likes: blog.likes.length, isLiked: likeIndex === -1 }
+      data: {
+        likes: blog.likes.length,
+        isLiked: likeIndex === -1
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// @route   POST /api/blogs/:id/comment
-// @desc    Add comment
-// @access  Private
+/* =========================
+   ADD COMMENT
+========================= */
 router.post('/:id/comment', protect, async (req, res) => {
   try {
     const { text } = req.body;
+
     const blog = await Blog.findById(req.params.id);
 
     if (!blog) {
-      return res.status(404).json({
-        success: false,
-        message: 'Blog not found'
-      });
+      return res.status(404).json({ message: 'Blog not found' });
     }
 
     blog.comments.push({
@@ -235,47 +222,37 @@ router.post('/:id/comment', protect, async (req, res) => {
 
     await blog.save();
 
-    const populatedBlog = await Blog.findById(blog._id)
+    const updatedBlog = await Blog.findById(blog._id)
       .populate('comments.user', 'username profileImage');
 
     res.json({
       success: true,
-      data: populatedBlog.comments
+      data: updatedBlog.comments
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// @route   DELETE /api/blogs/:id/comment/:commentId
-// @desc    Delete comment
-// @access  Private
+/* =========================
+   DELETE COMMENT
+========================= */
 router.delete('/:id/comment/:commentId', protect, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
 
     if (!blog) {
-      return res.status(404).json({
-        success: false,
-        message: 'Blog not found'
-      });
+      return res.status(404).json({ message: 'Blog not found' });
     }
 
     const comment = blog.comments.id(req.params.commentId);
 
     if (!comment) {
-      return res.status(404).json({
-        success: false,
-        message: 'Comment not found'
-      });
+      return res.status(404).json({ message: 'Comment not found' });
     }
 
-    // Check ownership
     if (comment.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to delete this comment'
-      });
+      return res.status(403).json({ message: 'Not authorized' });
     }
 
     comment.deleteOne();
