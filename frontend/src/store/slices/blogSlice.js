@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/blogs';
+const API_URL = 'https://blogging-platform-mnra.onrender.com/api/blogs';
 
 const initialState = {
   blogs: [],

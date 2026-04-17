@@ -1,50 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/blogs';
+const API_URL = 'https://blogging-platform-mnra.onrender.com/api/users';
 
-const initialState = {
-  blogs: [],
-  blog: null,
-  isLoading: false,
-  isError: false,
-  isSuccess: false,
-  message: '',
-  totalPages: 1,
-  currentPage: 1
-};
-
-// Create blog
-export const createBlog = createAsyncThunk(
-  'blog/create',
-  async (blogData, thunkAPI) => {
+// Register
+export const register = createAsyncThunk(
+  'auth/register',
+  async (userData, thunkAPI) => {
     try {
-      const state = thunkAPI.getState();
-      const token = state.auth.user?.token;
-
-      const response = await axios.post(API_URL, blogData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data.data;
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue(message);
-    }
-  }
-);
-
-// Get all blogs
-export const getBlogs = createAsyncThunk(
-  'blog/getAll',
-  async (filters = {}, thunkAPI) => {
-    try {
-      const { category, search, page = 1 } = filters;
-      let url = `${API_URL}?page=${page}`;
-      
-      if (category) url += `&category=${category}`;
-      if (search) url += `&search=${search}`;
-
-      const response = await axios.get(url);
+      const response = await axios.post(`${API_URL}/register`, userData);
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -53,13 +17,13 @@ export const getBlogs = createAsyncThunk(
   }
 );
 
-// Get single blog
-export const getBlog = createAsyncThunk(
-  'blog/getOne',
-  async (id, thunkAPI) => {
+// Login
+export const login = createAsyncThunk(
+  'auth/login',
+  async (userData, thunkAPI) => {
     try {
-      const response = await axios.get(`${API_URL}/${id}`);
-      return response.data.data;
+      const response = await axios.post(`${API_URL}/login`, userData);
+      return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
@@ -67,88 +31,16 @@ export const getBlog = createAsyncThunk(
   }
 );
 
-// Update blog
-export const updateBlog = createAsyncThunk(
-  'blog/update',
-  async ({ id, blogData }, thunkAPI) => {
-    try {
-      const state = thunkAPI.getState();
-      const token = state.auth.user?.token;
+const initialState = {
+  user: null,
+  isLoading: false,
+  isError: false,
+  isSuccess: false,
+  message: ''
+};
 
-      const response = await axios.put(`${API_URL}/${id}`, blogData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data.data;
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue(message);
-    }
-  }
-);
-
-// Delete blog
-export const deleteBlog = createAsyncThunk(
-  'blog/delete',
-  async (id, thunkAPI) => {
-    try {
-      const state = thunkAPI.getState();
-      const token = state.auth.user?.token;
-
-      await axios.delete(`${API_URL}/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return id;
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue(message);
-    }
-  }
-);
-
-// Like blog
-export const likeBlog = createAsyncThunk(
-  'blog/like',
-  async (id, thunkAPI) => {
-    try {
-      const state = thunkAPI.getState();
-      const token = state.auth.user?.token;
-
-      const response = await axios.post(
-        `${API_URL}/${id}/like`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return { id, data: response.data.data };
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue(message);
-    }
-  }
-);
-
-// Add comment
-export const addComment = createAsyncThunk(
-  'blog/addComment',
-  async ({ id, text }, thunkAPI) => {
-    try {
-      const state = thunkAPI.getState();
-      const token = state.auth.user?.token;
-
-      const response = await axios.post(
-        `${API_URL}/${id}/comment`,
-        { text },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data.data;
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue(message);
-    }
-  }
-);
-
-export const blogSlice = createSlice({
-  name: 'blog',
+export const authSlice = createSlice({
+  name: 'auth',
   initialState,
   reducers: {
     reset: (state) => {
@@ -160,63 +52,34 @@ export const blogSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Create blog
-      .addCase(createBlog.pending, (state) => {
+      .addCase(register.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(createBlog.fulfilled, (state, action) => {
+      .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.blogs.unshift(action.payload);
+        state.user = action.payload;
       })
-      .addCase(createBlog.rejected, (state, action) => {
+      .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
       })
-      // Get all blogs
-      .addCase(getBlogs.pending, (state) => {
+      .addCase(login.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(getBlogs.fulfilled, (state, action) => {
+      .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.blogs = action.payload.data;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.currentPage;
+        state.user = action.payload;
       })
-      .addCase(getBlogs.rejected, (state, action) => {
+      .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
-      })
-      // Get single blog
-      .addCase(getBlog.fulfilled, (state, action) => {
-        state.blog = action.payload;
-      })
-      // Update blog
-      .addCase(updateBlog.fulfilled, (state, action) => {
-        state.isSuccess = true;
-        state.blog = action.payload;
-      })
-      // Delete blog
-      .addCase(deleteBlog.fulfilled, (state, action) => {
-        state.blogs = state.blogs.filter((blog) => blog._id !== action.payload);
-      })
-      // Like blog
-      .addCase(likeBlog.fulfilled, (state, action) => {
-        if (state.blog && state.blog._id === action.payload.id) {
-          state.blog.likes = action.payload.data.likes;
-        }
-      })
-      // Add comment
-      .addCase(addComment.fulfilled, (state, action) => {
-        if (state.blog) {
-          state.blog.comments = action.payload;
-        }
       });
   }
 });
 
-export const { reset } = blogSlice.actions;
-export default blogSlice.reducer;
+export const { reset } = authSlice.actions;
+export default authSlice.reducer;
