@@ -48,6 +48,12 @@ export const authSlice = createSlice({
       state.isSuccess = false;
       state.isError = false;
       state.message = '';
+    },
+    logout: (state) => {
+      state.user = null;
+      state.isSuccess = false;
+      state.isError = false;
+      state.message = '';
     }
   },
   extraReducers: (builder) => {
@@ -81,5 +87,7 @@ export const authSlice = createSlice({
   }
 });
 
-export const { reset } = authSlice.actions;
+// 👇 IMPORTANT: logout add किया
+export const { reset, logout } = authSlice.actions;
+
 export default authSlice.reducer;
