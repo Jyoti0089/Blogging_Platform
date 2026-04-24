@@ -15,7 +15,7 @@ import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
 import PrivateRoute from './components/PrivateRoute';
 
-import './App.css';
+
 
 function App() {
   return (
