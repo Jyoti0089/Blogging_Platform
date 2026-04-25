@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'https://blogging-platform-mnra.onrender.com/api/users';
+const API_URL = 'https://blogging-platform-mnra.onrender.com/api/auth';
+
 
 // Register
 export const register = createAsyncThunk(
