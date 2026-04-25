@@ -49,15 +49,26 @@ export const authSlice = createSlice({
       state.isError = false;
       state.message = '';
     },
+
     logout: (state) => {
       state.user = null;
       state.isSuccess = false;
       state.isError = false;
       state.message = '';
+    },
+
+    // ✅ NEW: updateProfile added
+    updateProfile: (state, action) => {
+      state.user = {
+        ...state.user,
+        ...action.payload
+      };
     }
   },
+
   extraReducers: (builder) => {
     builder
+      // Register
       .addCase(register.pending, (state) => {
         state.isLoading = true;
       })
@@ -71,6 +82,8 @@ export const authSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
+
+      // Login
       .addCase(login.pending, (state) => {
         state.isLoading = true;
       })
@@ -87,7 +100,7 @@ export const authSlice = createSlice({
   }
 });
 
-// 👇 IMPORTANT: logout add किया
-export const { reset, logout } = authSlice.actions;
+// ✅ Export all actions
+export const { reset, logout, updateProfile } = authSlice.actions;
 
 export default authSlice.reducer;
