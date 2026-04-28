@@ -3,7 +3,6 @@ import axios from 'axios';
 
 const API_URL = 'https://blogging-platform-mnra.onrender.com/api/auth';
 
-
 // Register
 export const register = createAsyncThunk(
   'auth/register',
@@ -58,7 +57,6 @@ export const authSlice = createSlice({
       state.message = '';
     },
 
-    // ✅ NEW: updateProfile added
     updateProfile: (state, action) => {
       state.user = {
         ...state.user,
@@ -76,7 +74,7 @@ export const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.user = action.payload;
+        state.user = action.payload.data; // ✅ FIX
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
@@ -91,7 +89,7 @@ export const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.user = action.payload;
+        state.user = action.payload.data; // ✅ FIX
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
@@ -101,7 +99,7 @@ export const authSlice = createSlice({
   }
 });
 
-// ✅ Export all actions
+// Export actions
 export const { reset, logout, updateProfile } = authSlice.actions;
 
 export default authSlice.reducer;
