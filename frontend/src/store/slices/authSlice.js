@@ -23,6 +23,10 @@ export const login = createAsyncThunk(
   async (userData, thunkAPI) => {
     try {
       const response = await axios.post(`${API_URL}/login`, userData);
+
+      // ✅ IMPORTANT: log dekhne ke liye (debug)
+      console.log("LOGIN RESPONSE:", response.data);
+
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -32,7 +36,7 @@ export const login = createAsyncThunk(
 );
 
 const initialState = {
-  user: null,
+  user: JSON.parse(localStorage.getItem("user")) || null, // ✅ persist login
   isLoading: false,
   isError: false,
   isSuccess: false,
@@ -43,6 +47,7 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+
     reset: (state) => {
       state.isLoading = false;
       state.isSuccess = false;
@@ -52,9 +57,7 @@ export const authSlice = createSlice({
 
     logout: (state) => {
       state.user = null;
-      state.isSuccess = false;
-      state.isError = false;
-      state.message = '';
+      localStorage.removeItem("user"); // ✅ clear storage
     },
 
     updateProfile: (state, action) => {
@@ -62,12 +65,14 @@ export const authSlice = createSlice({
         ...state.user,
         ...action.payload
       };
+      localStorage.setItem("user", JSON.stringify(state.user));
     }
   },
 
   extraReducers: (builder) => {
     builder
-      // Register
+
+      // REGISTER
       .addCase(register.pending, (state) => {
         state.isLoading = true;
       })
@@ -75,8 +80,10 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
 
-        // ✅ Safe handling (user या data दोनों handle करेगा)
-        state.user = action.payload.user || action.payload.data;
+        const userData = action.payload.user || action.payload.data;
+
+        state.user = userData;
+        localStorage.setItem("user", JSON.stringify(userData)); // ✅ save
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
@@ -84,7 +91,7 @@ export const authSlice = createSlice({
         state.message = action.payload;
       })
 
-      // Login
+      // LOGIN
       .addCase(login.pending, (state) => {
         state.isLoading = true;
       })
@@ -92,8 +99,10 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
 
-        // ✅ Safe handling
-        state.user = action.payload.user || action.payload.data;
+        const userData = action.payload.user || action.payload.data;
+
+        state.user = userData;
+        localStorage.setItem("user", JSON.stringify(userData)); // ✅ save
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
@@ -103,7 +112,6 @@ export const authSlice = createSlice({
   }
 });
 
-// Export actions
+// exports
 export const { reset, logout, updateProfile } = authSlice.actions;
-
 export default authSlice.reducer;
