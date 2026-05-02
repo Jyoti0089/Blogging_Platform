@@ -17,6 +17,7 @@ const Navbar = () => {
     <nav className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
+
           {/* Logo */}
           <Link to="/" className="text-2xl font-bold text-blue-600">
             BlogHub
@@ -24,6 +25,7 @@ const Navbar = () => {
 
           {/* Navigation Links */}
           <div className="flex items-center gap-6">
+
             <Link
               to="/"
               className="text-gray-700 hover:text-blue-600 transition font-medium"
@@ -40,7 +42,7 @@ const Navbar = () => {
                   Create Blog
                 </Link>
 
-                {user.role === 'admin' && (
+                {user?.role === 'admin' && (
                   <Link
                     to="/dashboard"
                     className="text-gray-700 hover:text-blue-600 transition font-medium"
@@ -49,16 +51,19 @@ const Navbar = () => {
                   </Link>
                 )}
 
+                {/* ✅ FIXED PROFILE LINK */}
                 <Link
-                  to={`/profile/${user.id}`}
+                  to={`/profile/${user?._id}`}
                   className="flex items-center gap-2 hover:opacity-80 transition"
                 >
                   <img
-                    src={user.profileImage}
-                    alt={user.username}
+                    src={user?.profileImage || "https://via.placeholder.com/40"}
+                    alt={user?.username || "user"}
                     className="w-8 h-8 rounded-full"
                   />
-                  <span className="text-gray-700 font-medium">{user.username}</span>
+                  <span className="text-gray-700 font-medium">
+                    {user?.username || "User"}
+                  </span>
                 </Link>
 
                 <button
@@ -76,6 +81,7 @@ const Navbar = () => {
                 >
                   Login
                 </Link>
+
                 <Link
                   to="/register"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -84,6 +90,7 @@ const Navbar = () => {
                 </Link>
               </>
             )}
+
           </div>
         </div>
       </div>
